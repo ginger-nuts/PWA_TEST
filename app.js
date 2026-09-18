@@ -42,6 +42,8 @@ function render() {
     const text = document.createElement("span");
     text.className = "text";
     text.textContent = item.text;
+    // タップで編集モードに入る
+    text.addEventListener("click", () => beginEdit(li, item));
 
     const del = document.createElement("button");
     del.className = "del";
@@ -61,6 +63,41 @@ function render() {
   });
 }
 
+// ---- 項目のタップで内容を編集 ----
+function beginEdit(li, item) {
+  if (li.classList.contains("editing")) return;
+  if (dragEl) return; // ドラッグ中は編集しない
+  li.classList.add("editing");
+
+  const textEl = li.querySelector(".text");
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "text-edit";
+  input.value = item.text;
+  input.setAttribute("enterkeyhint", "done");
+  li.replaceChild(input, textEl);
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+
+  let finished = false;
+  const commit = (keep) => {
+    if (finished) return;
+    finished = true;
+    if (keep) {
+      const v = input.value.trim();
+      if (v) item.text = v; // 空欄なら変更しない
+      save();
+    }
+    render(); // 通常表示に戻す
+  };
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); commit(true); }
+    else if (e.key === "Escape") { e.preventDefault(); commit(false); }
+  });
+  input.addEventListener("blur", () => commit(true));
+}
+
 // ---- 長押しでドラッグ&ドロップ並び替え ----
 // iOS Safari では pointermove の preventDefault ではスクロールを止められないため、
 // ジェスチャ開始前から存在する passive:false の touchmove リスナーで抑止する。
@@ -72,8 +109,9 @@ let startX = 0;
 let startY = 0;
 
 function onItemPointerDown(e, li) {
-  // チェック・削除ボタンのタップは邪魔しない。マウスは左ボタンのみ
-  if (e.target.closest(".check, .del")) return;
+  // チェック・削除・編集入力のタップは邪魔しない。マウスは左ボタンのみ
+  if (e.target.closest(".check, .del, .text-edit")) return;
+  if (li.classList.contains("editing")) return;
   if (e.pointerType === "mouse" && e.button !== 0) return;
   startX = e.clientX;
   startY = e.clientY;
