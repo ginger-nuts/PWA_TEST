@@ -53,35 +53,71 @@ function render() {
       render();
     };
 
-    // 並び替え用ドラッグハンドル
-    const handle = document.createElement("div");
-    handle.className = "handle";
-    handle.textContent = "⠿";
-    handle.setAttribute("aria-label", "ドラッグして並び替え");
-    handle.addEventListener("pointerdown", (e) => startDrag(e, li));
+    // 行を長押しすると並び替えを開始
+    li.addEventListener("pointerdown", (e) => onItemPointerDown(e, li));
 
-    li.append(handle, check, text, del);
+    li.append(check, text, del);
     listEl.appendChild(li);
   });
 }
 
-// ---- ドラッグ&ドロップ並び替え（Pointer Events：iOSタッチ対応）----
+// ---- 長押しでドラッグ&ドロップ並び替え（Pointer Events：iOSタッチ対応）----
+const LONG_PRESS_MS = 450; // 長押し判定のミリ秒
+const MOVE_TOLERANCE = 10; // これ以上動いたらスクロール/タップとみなし長押し中止
 let dragEl = null;
+let pressTimer = null;
+let startX = 0;
+let startY = 0;
+let pressPointerId = null;
 
-function startDrag(e, li) {
-  e.preventDefault();
+function onItemPointerDown(e, li) {
+  // チェック・削除ボタンのタップは邪魔しない
+  if (e.target.closest(".check, .del")) return;
+  startX = e.clientX;
+  startY = e.clientY;
+  pressPointerId = e.pointerId;
+  // 長押しタイマー開始（指を止めたまま一定時間でドラッグ開始）
+  pressTimer = setTimeout(() => beginDrag(li), LONG_PRESS_MS);
+  document.addEventListener("pointermove", onPreDragMove);
+  document.addEventListener("pointerup", onPreDragEnd);
+  document.addEventListener("pointercancel", onPreDragEnd);
+}
+
+// ドラッグ開始前：指が動いたら（＝スクロール意図）長押しを中止
+function onPreDragMove(e) {
+  if (Math.abs(e.clientX - startX) > MOVE_TOLERANCE ||
+      Math.abs(e.clientY - startY) > MOVE_TOLERANCE) {
+    cancelPress();
+  }
+}
+
+function onPreDragEnd() {
+  cancelPress();
+}
+
+function cancelPress() {
+  clearTimeout(pressTimer);
+  pressTimer = null;
+  document.removeEventListener("pointermove", onPreDragMove);
+  document.removeEventListener("pointerup", onPreDragEnd);
+  document.removeEventListener("pointercancel", onPreDragEnd);
+}
+
+function beginDrag(li) {
+  cancelPress();
   dragEl = li;
   li.classList.add("dragging");
-  // ハンドルでポインタを掴み続ける（指が多少ずれても追従）
-  try { e.target.setPointerCapture(e.pointerId); } catch (_) {}
-  // 終了処理が確実に走るよう document で購読（要素外で離しても検知）
-  document.addEventListener("pointermove", onDragMove);
+  try { li.setPointerCapture(pressPointerId); } catch (_) {}
+  if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
+  // passive:false で pointermove の preventDefault（スクロール抑止）を有効化
+  document.addEventListener("pointermove", onDragMove, { passive: false });
   document.addEventListener("pointerup", endDrag);
   document.addEventListener("pointercancel", endDrag);
 }
 
 function onDragMove(e) {
   if (!dragEl) return;
+  e.preventDefault(); // ドラッグ中はページをスクロールさせない
   const after = getDropTarget(e.clientY);
   if (after == null) {
     listEl.appendChild(dragEl);
@@ -107,6 +143,7 @@ function endDrag() {
   document.removeEventListener("pointercancel", endDrag);
   dragEl.classList.remove("dragging");
   dragEl = null;
+  pressPointerId = null;
   // 画面上の並び順に合わせて items を作り直して保存
   const order = [...listEl.querySelectorAll("li")].map((li) => li.dataset.id);
   items.sort((a, b) => order.indexOf(String(a.id)) - order.indexOf(String(b.id)));
