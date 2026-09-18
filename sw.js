@@ -1,5 +1,5 @@
 // Service Worker: オフライン対応（キャッシュ）
-const CACHE = "todo-cache-v1";
+const CACHE = "todo-cache-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -29,21 +29,19 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// リクエスト時：キャッシュ優先、なければネットワーク
+// リクエスト時：ネットワーク優先（オンライン時は常に最新を取得）。
+// 失敗（オフライン）時のみキャッシュから返す。取得成功時はキャッシュも更新。
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return (
-        cached ||
-        fetch(event.request)
-          .then((res) => {
-            const copy = res.clone();
-            caches.open(CACHE).then((cache) => cache.put(event.request, copy));
-            return res;
-          })
-          .catch(() => caches.match("./index.html"))
-      );
-    })
+    fetch(event.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        return res;
+      })
+      .catch(() =>
+        caches.match(event.request).then((cached) => cached || caches.match("./index.html"))
+      )
   );
 });
