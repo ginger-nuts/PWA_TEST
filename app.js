@@ -61,26 +61,28 @@ function render() {
   });
 }
 
-// ---- 長押しでドラッグ&ドロップ並び替え（Pointer Events：iOSタッチ対応）----
+// ---- 長押しでドラッグ&ドロップ並び替え ----
+// iOS Safari では pointermove の preventDefault ではスクロールを止められないため、
+// ジェスチャ開始前から存在する passive:false の touchmove リスナーで抑止する。
 const LONG_PRESS_MS = 450; // 長押し判定のミリ秒
 const MOVE_TOLERANCE = 10; // これ以上動いたらスクロール/タップとみなし長押し中止
 let dragEl = null;
 let pressTimer = null;
 let startX = 0;
 let startY = 0;
-let pressPointerId = null;
 
 function onItemPointerDown(e, li) {
-  // チェック・削除ボタンのタップは邪魔しない
+  // チェック・削除ボタンのタップは邪魔しない。マウスは左ボタンのみ
   if (e.target.closest(".check, .del")) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
   startX = e.clientX;
   startY = e.clientY;
-  pressPointerId = e.pointerId;
   // 長押しタイマー開始（指を止めたまま一定時間でドラッグ開始）
+  clearTimeout(pressTimer);
   pressTimer = setTimeout(() => beginDrag(li), LONG_PRESS_MS);
   document.addEventListener("pointermove", onPreDragMove);
-  document.addEventListener("pointerup", onPreDragEnd);
-  document.addEventListener("pointercancel", onPreDragEnd);
+  document.addEventListener("pointerup", cancelPress);
+  document.addEventListener("pointercancel", cancelPress);
 }
 
 // ドラッグ開始前：指が動いたら（＝スクロール意図）長押しを中止
@@ -91,34 +93,41 @@ function onPreDragMove(e) {
   }
 }
 
-function onPreDragEnd() {
-  cancelPress();
-}
-
 function cancelPress() {
   clearTimeout(pressTimer);
   pressTimer = null;
   document.removeEventListener("pointermove", onPreDragMove);
-  document.removeEventListener("pointerup", onPreDragEnd);
-  document.removeEventListener("pointercancel", onPreDragEnd);
+  document.removeEventListener("pointerup", cancelPress);
+  document.removeEventListener("pointercancel", cancelPress);
 }
 
 function beginDrag(li) {
   cancelPress();
   dragEl = li;
   li.classList.add("dragging");
-  try { li.setPointerCapture(pressPointerId); } catch (_) {}
   if (navigator.vibrate) { try { navigator.vibrate(15); } catch (_) {} }
-  // passive:false で pointermove の preventDefault（スクロール抑止）を有効化
-  document.addEventListener("pointermove", onDragMove, { passive: false });
+  // ドラッグ終了の検知（タッチ・マウス両対応）
   document.addEventListener("pointerup", endDrag);
   document.addEventListener("pointercancel", endDrag);
+  document.addEventListener("touchend", endDrag);
+  document.addEventListener("touchcancel", endDrag);
 }
 
-function onDragMove(e) {
-  if (!dragEl) return;
-  e.preventDefault(); // ドラッグ中はページをスクロールさせない
-  const after = getDropTarget(e.clientY);
+// タッチの移動：ドラッグ中はスクロールを止めて並び替え（iOS対応の要）
+function onGlobalTouchMove(e) {
+  if (!dragEl) return; // ドラッグ中でなければ通常スクロールを許可
+  e.preventDefault();
+  moveDragTo(e.touches[0].clientY);
+}
+
+// マウスの移動：ドラッグ中に並び替え（デスクトップ用）
+function onGlobalPointerMove(e) {
+  if (!dragEl || e.pointerType !== "mouse") return;
+  moveDragTo(e.clientY);
+}
+
+function moveDragTo(y) {
+  const after = getDropTarget(y);
   if (after == null) {
     listEl.appendChild(dragEl);
   } else if (after !== dragEl) {
@@ -138,17 +147,25 @@ function getDropTarget(y) {
 
 function endDrag() {
   if (!dragEl) return;
-  document.removeEventListener("pointermove", onDragMove);
   document.removeEventListener("pointerup", endDrag);
   document.removeEventListener("pointercancel", endDrag);
+  document.removeEventListener("touchend", endDrag);
+  document.removeEventListener("touchcancel", endDrag);
   dragEl.classList.remove("dragging");
   dragEl = null;
-  pressPointerId = null;
   // 画面上の並び順に合わせて items を作り直して保存
   const order = [...listEl.querySelectorAll("li")].map((li) => li.dataset.id);
   items.sort((a, b) => order.indexOf(String(a.id)) - order.indexOf(String(b.id)));
   save();
+  // ドロップ直後に発火する擬似クリック（チェック等の誤爆）を1回だけ無効化
+  const killClick = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+  document.addEventListener("click", killClick, true);
+  setTimeout(() => document.removeEventListener("click", killClick, true), 350);
 }
+
+// スクロール抑止リスナーはジェスチャ開始前から常設しておく（iOSで必須）
+document.addEventListener("touchmove", onGlobalTouchMove, { passive: false });
+document.addEventListener("pointermove", onGlobalPointerMove);
 
 formEl.addEventListener("submit", (e) => {
   e.preventDefault();
