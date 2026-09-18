@@ -26,7 +26,16 @@
       <p class="hint">項目を長押しするとドラッグして並び替えできます</p>
     </header>
 
-    <form class="input-row" id="form">
+    <ul class="list" id="list"></ul>
+
+    <p class="empty" id="empty">まだ何もありません。下の欄から追加してみましょう。</p>
+
+    <p class="version">build 6（長押しドラッグ・スクロール修正）</p>
+  </div>
+
+  <!-- 画面下部に固定する入力バー -->
+  <form class="input-bar" id="form">
+    <div class="input-row">
       <input
         id="input"
         type="text"
@@ -35,14 +44,8 @@
         enterkeyhint="done"
       />
       <button type="submit" aria-label="追加">＋</button>
-    </form>
-
-    <ul class="list" id="list"></ul>
-
-    <p class="empty" id="empty">まだ何もありません。上の欄から追加してみましょう。</p>
-
-    <p class="version">build 5（長押しドラッグ・スクロール修正）</p>
-  </div>
+    </div>
+  </form>
 
   <!-- iOS Safari 用のインストール案内 -->
   <div class="install-tip" id="installTip" hidden>
