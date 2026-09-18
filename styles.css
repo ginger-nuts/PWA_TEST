@@ -80,6 +80,29 @@ html, body {
 }
 @keyframes pop { from { transform: scale(.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
+/* ドラッグ中の項目 */
+.list li.dragging {
+  opacity: 0.85;
+  background: var(--bg);
+  box-shadow: 0 6px 20px rgba(0,0,0,.25);
+  animation: none;
+}
+
+/* 並び替え用ドラッグハンドル */
+.list li .handle {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+  cursor: grab;
+  padding: 4px 2px;
+  /* タッチでハンドルを掴んだときにページがスクロールしないように */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.list li .handle:active { cursor: grabbing; }
+
 .list li .check {
   width: 24px;
   height: 24px;
