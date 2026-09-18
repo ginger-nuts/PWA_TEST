@@ -1,0 +1,136 @@
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --text: #1c1c1e;
+  --muted: #8e8e93;
+  --accent: #4f46e5;
+  --danger: #ff3b30;
+  --line: #e5e5ea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --card: #1c1c1e;
+    --text: #f2f2f7;
+    --muted: #8e8e93;
+    --line: #2c2c2e;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Helvetica Neue", sans-serif;
+  /* iOSのノッチ/ホームバー対応 */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.app {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.header { padding: 8px 4px 16px; }
+.header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+.hint { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+
+.input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.input-row input {
+  flex: 1;
+  font-size: 17px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+}
+.input-row input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+.input-row button {
+  width: 52px;
+  font-size: 26px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+.input-row button:active { opacity: 0.7; }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  animation: pop .15s ease;
+}
+@keyframes pop { from { transform: scale(.97); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+.list li .check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 14px;
+}
+.list li.done .check { background: var(--accent); border-color: var(--accent); }
+.list li.done .text { text-decoration: line-through; color: var(--muted); }
+.list li .text { flex: 1; font-size: 17px; word-break: break-word; }
+.list li .del {
+  border: none;
+  background: none;
+  color: var(--danger);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  margin-top: 40px;
+  font-size: 15px;
+}
+
+.install-tip {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  text-align: center;
+}
+.install-tip p { margin: 4px 0; }
+.install-tip .small { color: var(--muted); font-size: 14px; }
+.install-tip button {
+  margin-top: 8px;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+}

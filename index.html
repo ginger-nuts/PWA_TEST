@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>やることメモ</title>
+
+  <!-- PWA 基本 -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#4f46e5" />
+
+  <!-- iOS 用（ホーム画面アプリ対応） -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="やることメモ" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>やることメモ</h1>
+      <p class="hint" id="status">オフラインでも動きます</p>
+    </header>
+
+    <form class="input-row" id="form">
+      <input
+        id="input"
+        type="text"
+        placeholder="やることを入力…"
+        autocomplete="off"
+        enterkeyhint="done"
+      />
+      <button type="submit" aria-label="追加">＋</button>
+    </form>
+
+    <ul class="list" id="list"></ul>
+
+    <p class="empty" id="empty">まだ何もありません。上の欄から追加してみましょう。</p>
+  </div>
+
+  <!-- iOS Safari 用のインストール案内 -->
+  <div class="install-tip" id="installTip" hidden>
+    <p>ホーム画面に追加すると、アプリのように使えます。</p>
+    <p class="small">共有ボタン <b>􀈂</b> →「ホーム画面に追加」</p>
+    <button id="closeTip">閉じる</button>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
